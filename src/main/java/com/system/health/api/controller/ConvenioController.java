@@ -2,7 +2,8 @@ package com.system.health.api.controller;
 
 import java.util.List;
 
-import org.springframework.beans.BeanUtils;
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.system.health.api.assembler.ConvenioInputDisassembler;
+import com.system.health.api.assembler.ConvenioModelAssembler;
+import com.system.health.api.model.ConvenioModel;
+import com.system.health.api.model.input.ConvenioInput;
+import com.system.health.domain.exception.ConvenioNaoEncontradoException;
+import com.system.health.domain.exception.NegocioException;
 import com.system.health.domain.model.Convenio;
 import com.system.health.domain.repository.ConvenioRepository;
 import com.system.health.domain.service.CadastroConvenioService;
@@ -29,35 +36,49 @@ public class ConvenioController {
 	@Autowired
 	private CadastroConvenioService cadastroConvenio;
 
+	@Autowired
+	private ConvenioModelAssembler convenioModelAssembler;
+	
+	@Autowired
+	private ConvenioInputDisassembler convenioInputDisassembler;	
+
 	@GetMapping
-	public List<Convenio> listar() {
-		return convenioRepository.findAll();
+	public List<ConvenioModel> listar() {
+		return convenioModelAssembler.toCollectionModel(convenioRepository.findAll());
 	}
 
 	@GetMapping("/{id}")
-	public Convenio findById(@PathVariable Long id) {
+	public ConvenioModel findById(@PathVariable Long id) {
 		Convenio convenio = cadastroConvenio.buscarPorId(id);
-		return convenio;
+		return convenioModelAssembler.toModel(convenio);
+
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Convenio adicionar(@RequestBody Convenio convenio) {
-		return cadastroConvenio.salvar(convenio);
+	public ConvenioModel adicionar(@RequestBody @Valid ConvenioInput convenioInput) {
+		try {
+			Convenio convenio = convenioInputDisassembler.toDomainObject(convenioInput);
+			return convenioModelAssembler.toModel(cadastroConvenio.salvar(convenio));
+		} catch (ConvenioNaoEncontradoException e) {
+			throw new NegocioException(e.getMessage(), e);
+		}
 	}
 
 	@PutMapping("/{id}")
-	public Convenio atualizar(@PathVariable Long id, @RequestBody Convenio convenio) {
+	public ConvenioModel atualizar(@PathVariable Long id, @RequestBody @Valid ConvenioInput convenioInput) {
 		Convenio convenioSalva = cadastroConvenio.buscarPorId(id);
-		BeanUtils.copyProperties(convenio, convenioSalva, "id");
-		return cadastroConvenio.salvar(convenioSalva);
+		convenioInputDisassembler.copyToDomainObject(convenioInput, convenioSalva);
+		try {
+			return convenioModelAssembler.toModel(cadastroConvenio.salvar(convenioSalva));
+		} catch (ConvenioNaoEncontradoException e) {
+			throw new NegocioException(e.getMessage(), e);
+		}
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id) {
 		cadastroConvenio.excluir(id);
-
 	}
-
 }

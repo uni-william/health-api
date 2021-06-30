@@ -1,4 +1,4 @@
-package com.system.health.api.core.web;
+package com.system.health.core;
 
 import java.util.Arrays;
 

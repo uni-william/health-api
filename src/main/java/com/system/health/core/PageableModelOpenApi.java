@@ -1,4 +1,4 @@
-package com.system.health.api.core.model;
+package com.system.health.core;
 
 import java.util.List;
 

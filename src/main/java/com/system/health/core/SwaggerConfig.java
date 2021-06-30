@@ -1,12 +1,10 @@
-package com.system.health.api.core;
+package com.system.health.core;
 
 import java.util.Collections;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Pageable;
-
-import com.system.health.api.core.model.PageableModelOpenApi;
 
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
